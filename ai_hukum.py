@@ -12,7 +12,8 @@ from urllib.parse import urlparse, urljoin, urlencode
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Mode headless
 chrome_options.add_argument("--disable-gpu")  # Menonaktifkan GPU (untuk stabilitas)
-chrome_options.add_argument("--window-size=1920x1080")  # Simulasi ukuran layar penuh
+chrome_options.add_argument("--no-sandbox")  # Menghindari error di lingkungan server
+chrome_options.add_argument("--disable-dev-shm-usage")  # Menghindari masalah memori
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
 service = Service(ChromeDriverManager().install())
