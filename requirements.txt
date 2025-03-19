@@ -4,5 +4,3 @@ webdriver-manager
 fuzzywuzzy
 python-Levenshtein
 chromedriver-autoinstaller
-subprocess
-os
