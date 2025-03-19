@@ -6,7 +6,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from fuzzywuzzy import process
-from urllib.parse import urlparse, urljoin, urlencode 
+from urllib.parse import urlparse, urljoin, urlencode
+import chromedriver_autoinstaller
+import subprocess
+
+chromedriver_autoinstaller.install()
+subprocess.run("apt-get update", shell=True)
+subprocess.run("apt-get install -y google-chrome-stable", shell=True)
 
 # Konfigurasi Chrome agar berjalan tanpa GUI
 chrome_options = Options()
