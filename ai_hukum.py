@@ -9,10 +9,17 @@ from fuzzywuzzy import process
 from urllib.parse import urlparse, urljoin, urlencode
 import chromedriver_autoinstaller
 import subprocess
+import os
 
 chromedriver_autoinstaller.install()
-subprocess.run("apt-get update", shell=True)
-subprocess.run("apt-get install -y google-chrome-stable", shell=True)
+chrome_path = "/usr/bin/google-chrome"
+if not os.path.exists(chrome_path):
+    st.write("Menginstal Google Chrome...")
+    subprocess.run("wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", shell=True)
+    subprocess.run("dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install", shell=True)
+    st.write("✅ Google Chrome berhasil diinstal!")
+else:
+    st.write("✅ Google Chrome sudah terinstal.")
 
 # Konfigurasi Chrome agar berjalan tanpa GUI
 chrome_options = Options()
