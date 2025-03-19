@@ -3,3 +3,4 @@ selenium
 webdriver-manager
 fuzzywuzzy
 python-Levenshtein
+chromedriver-autoinstaller
