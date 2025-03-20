@@ -11,15 +11,18 @@ import chromedriver_autoinstaller
 import subprocess
 import os
 
-chromedriver_autoinstaller.install()
+# Cek apakah Chrome sudah ada
 chrome_path = "/usr/bin/google-chrome"
 if not os.path.exists(chrome_path):
-    st.write("Menginstal Google Chrome...")
-    subprocess.run("wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", shell=True)
+    print("🔄 Menginstal Google Chrome...")
+    subprocess.run("wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", shell=True)
     subprocess.run("dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install", shell=True)
-    st.write("✅ Google Chrome berhasil diinstal!")
+    print("✅ Google Chrome berhasil diinstal!")
 else:
-    st.write("✅ Google Chrome sudah terinstal.")
+    print("✅ Google Chrome sudah terinstal.")
+
+# Tambahkan path Chrome ke lingkungan
+os.environ["PATH"] += os.pathsep + "/usr/bin"
 
 # Konfigurasi Chrome agar berjalan tanpa GUI
 chrome_options = Options()
