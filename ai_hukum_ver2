@@ -1,0 +1,612 @@
+import streamlit as st
+import pandas as pd
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from urllib.parse import urlparse, urljoin
+
+# Konfigurasi Chrome agar berjalan tanpa GUI
+def init_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Mode headless
+    chrome_options.add_argument("--disable-gpu")  # Menonaktifkan GPU (untuk stabilitas)
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument('--no-proxy-server')
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    service = Service("C:/Users/ASUS/Downloads/chromedriver-win64/chromedriver-win64/chromedriver.exe")
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    return driver
+
+def get_peraturan_page(driver, base_url):
+    """Fungsi untuk mengambil semua link internal dari halaman saat ini."""
+    page_links = set()
+    elements =  driver.find_elements(By.CSS_SELECTOR, ".page-link")
+    base_domain = urlparse(base_url).netloc
+    for element in elements:
+        href = element.get_attribute("href")
+        if href:
+            parsed_href = urlparse(href)
+            # Jika href kosong atau masih di domain yang sama, tambahkan link tersebut
+            if parsed_href.netloc == "" or parsed_href.netloc == base_domain:
+                full_url = urljoin(base_url, href)
+                page_links.add(full_url)
+    return page_links
+
+def get_putusan_ma_page(driver, base_url):
+    """Fungsi untuk mengambil semua link internal dari halaman saat ini."""
+    page_links = set()
+    elements = driver.find_elements(By.CSS_SELECTOR, ".page-link")
+    base_domain = urlparse(base_url).netloc
+    for element in elements:
+        href = element.get_attribute("href")
+        if href:
+            parsed_href = urlparse(href)
+            # Jika href kosong atau masih di domain yang sama, tambahkan link tersebut
+            if parsed_href.netloc == "" or parsed_href.netloc == base_domain:
+                full_url = urljoin(base_url, href)
+                page_links.add(full_url)
+    return page_links
+
+def get_putusan_mk_page(driver, base_url):
+    """Fungsi untuk mengambil semua link internal dari halaman saat ini."""
+    page_links = set()
+    elements = driver.find_elements(By.CSS_SELECTOR, ".pager2 a")
+    base_domain = urlparse(base_url).netloc
+    for element in elements:
+        href = element.get_attribute("href")
+        if href:
+            parsed_href = urlparse(href)
+            # Jika href kosong atau masih di domain yang sama, tambahkan link tersebut
+            if parsed_href.netloc == "" or parsed_href.netloc == base_domain:
+                full_url = urljoin(base_url, href)
+                page_links.add(full_url)
+    return page_links
+
+@st.cache_data(show_spinner="Mengambil data peraturan dari website...")
+def cached_peraturan(start_url, max_pages=3):
+    return scrape_peraturan_website(start_url, max_pages)
+
+def scrape_peraturan_website(start_url, max_pages=3):
+    driver = init_driver()
+    visited = set()
+    to_visit = [start_url]
+    halaman_peraturan = {} # Dictionary untuk menyimpan pasangan {kata: detail}
+
+    while to_visit and len(visited) < max_pages:
+        url = to_visit.pop(0)
+        if url in visited:
+            continue
+        print(f"Scraping: {url}")
+        try:
+            driver.get(url)
+            time.sleep(1)
+        except Exception as e:
+            print(f"Error mengakses {url}: {e}")
+            continue
+
+        visited.add(url)
+        print(f"Scraped URL: {url}, Status: {driver.title}")
+
+        try:
+            card_elements = driver.find_elements(By.CSS_SELECTOR, ".flex-grow-1")
+            for card in card_elements:
+                try:
+                    # Cek dan ambil isi elemen tingkat
+                    tingkat = card.find_element(By.CSS_SELECTOR, ".col-lg-8.fw-semibold.fs-5.text-gray-600").text.strip()
+
+                    try:
+                        isi_tingkat = card.find_element(By.CSS_SELECTOR, ".card-rounded.bg-primary.bg-opacity-5.p-6.mb-5").text.strip()
+                    except:
+                        isi_tingkat = tingkat
+
+                    tentang = card.find_element(By.CSS_SELECTOR, ".col-lg-10.fs-2.fw-bold.pe-4").text.strip()
+                    # Ambil status dan isi status (jika ada lebih dari satu)
+                    try:
+                        cari_status = card.find_elements(By.CSS_SELECTOR, ".col-lg-2")
+                        status = [s.text.strip() for s in cari_status if s.text.strip()]
+                    except:
+                        status = []
+
+                    try:
+                        cari_isi_status = card.find_elements(By.CSS_SELECTOR, ".col-lg-10")
+                        isi_status = [s.text.strip() for s in cari_isi_status if s.text.strip()]
+                    except:
+                        isi_status = []
+                                
+                    pdf = card.find_element(By.CSS_SELECTOR, "a[href$='.pdf']").get_attribute("href")
+                    # Simpan jika 'tentang' tidak kosong
+                    if tentang:
+                        halaman_peraturan[tentang] = (tingkat, isi_tingkat, status, isi_status, pdf)
+
+                except Exception as e:
+                    print(f"Error saat memproses kartu: {e}")
+            
+        except Exception as e:
+            print(f"Error saat mengekstrak data dari {url}: {e}")
+
+        new_links = get_peraturan_page(driver, start_url)
+        for link in new_links:
+            if link not in visited and link not in to_visit:
+                to_visit.append(link)
+
+    driver.quit()
+
+    return halaman_peraturan
+
+@st.cache_data(show_spinner="Mengambil data putusan MA dari website...")
+def cached_putusan_ma(start_url, max_pages=3):
+    return scrape_putusan_ma_website(start_url, max_pages)
+
+def scrape_putusan_ma_website(start_url, max_pages=3):
+    driver = init_driver()
+    visited = set()
+    to_visit = [start_url]
+    halaman_putusan_ma = {} # Dictionary untuk menyimpan pasangan {kata: detail}
+    
+    while to_visit and len(visited) < max_pages:
+        url = to_visit.pop(0)
+        if url in visited:
+            continue
+        print(f"Scraping: {url}")
+        try:
+            driver.get(url)
+            time.sleep(1)
+        except Exception as e:
+            print(f"Error mengakses {url}: {e}")
+            continue
+        visited.add(url)
+
+        print(f"Scraped URL: {url}, Status: {driver.title}")
+
+        try:
+            card_elements = driver.find_elements(By.CSS_SELECTOR, '.entry-c')
+            for card in card_elements:
+                try:
+                    judul_putusan_ma = card.find_element(By.XPATH, './/strong/a').text.strip()
+                    print("Judul MA ditemukan :", judul_putusan_ma)
+                    detail_putusan_ma = card.find_element(By.CSS_SELECTOR, ".nobottommargin").text.strip()
+                    print("Detail MA ditemukan", detail_putusan_ma)
+                    masuk_putusan_ma = card.find_element(By.XPATH, "//a[contains(@href, 'https://putusan3.mahkamahagung.go.id/direktori/putusan')]")
+                    masuk_putusan_ma.click()
+                    if masuk_putusan_ma:
+                        link_putusan_ma = driver.find_elements(By.CSS_SELECTOR, ".portfolio-meta.nobottommargin")
+                        for ul in link_putusan_ma:
+                            try:
+                                pdf_putusan_ma = ul.find_element(By.CSS_SELECTOR, "a[href$='/pdf/']").get_attribute("href")
+                                #pdf_putusan_ma = ul.find_element(By.XPATH, './/a[contains(@href, "/pdf/")]').get_attribute("href")
+                                print("Link PDF ditemukan :", pdf_putusan_ma)
+                            except:
+                                print("Link PDF tidak ditemukan.")
+                
+                    if judul_putusan_ma:
+                        halaman_putusan_ma[judul_putusan_ma] = (detail_putusan_ma, pdf_putusan_ma)
+
+                except Exception as e:
+                    print(f"Error saat memproses kartu: {e}")
+            
+        except Exception as e:
+            print(f"Error saat mengekstrak data dari {url}: {e}")
+
+        new_links = get_putusan_ma_page(driver, start_url)
+        for link in new_links:
+            if link not in visited and link not in to_visit:
+                to_visit.append(link)
+
+    driver.quit()
+
+    return halaman_putusan_ma
+
+@st.cache_data(show_spinner="Mengambil data putusan MK dari website...")
+def cached_putusan_mk(start_url, max_pages=3):
+    return scrape_putusan_mk_website(start_url, max_pages)
+
+def scrape_putusan_mk_website(start_url, max_pages=3):
+    driver = init_driver()
+    visited = set()
+    to_visit = [start_url]
+    halaman_putusan_mk = {} # Dictionary untuk menyimpan pasangan {kata: detail}
+
+    
+    while to_visit and len(visited) < max_pages:
+        url = to_visit.pop(0)
+        if url in visited:
+            continue
+        print(f"Scraping: {url}")
+        try:
+            driver.get(url)
+            time.sleep(1)
+        except Exception as e:
+            print(f"Error mengakses {url}: {e}")
+            continue
+        visited.add(url)
+
+        print(f"Scraped URL: {url}, Status: {driver.title}")
+
+        try:
+            card_elements = driver.find_elements(By.CSS_SELECTOR, ".content-persidangan-isi")
+            for card in card_elements:
+                try:
+                    nomor_putusan_mk = ""
+                    pokok_perkara_mk = ""
+                    amar_putusan_mk = ""
+                    status_putusan_mk = ""
+                    pdf_putusan_mk = ""
+
+                    baris_data = card.find_elements(By.XPATH, "./div")  # Ambil semua <div> langsung di bawah .content-persidangan-isi
+
+                    for baris in baris_data:
+                        kolom = baris.find_elements(By.XPATH, "./div")  # Ambil 3 <div> dalam setiap baris
+                        if len(kolom) >= 3:
+                            label = kolom[0].text.strip()
+                            nilai = kolom[2].text.strip()
+
+                            if label == "Nomor":
+                                nomor_putusan_mk = nilai
+                            elif label == "Pokok Perkara":
+                                pokok_perkara_mk = nilai
+                            elif label == "Amar Putusan":
+                                amar_putusan_mk = nilai
+                            elif label == "Status":
+                                status_putusan_mk = nilai
+                            elif label == "File Pendukung":
+                                try:
+                                    a_tag = kolom[2].find_element(By.TAG_NAME, "a")
+                                    href = a_tag.get_attribute("href")
+                                    pdf_putusan_mk = urljoin(driver.current_url, href)
+                                except:
+                                    pdf_putusan_mk = ""
+        
+                    if pokok_perkara_mk:
+                        halaman_putusan_mk[pokok_perkara_mk] = (nomor_putusan_mk, amar_putusan_mk, status_putusan_mk, pdf_putusan_mk)
+
+                except Exception as e:
+                    print(f"Error saat memproses kartu: {e}")
+            
+        except Exception as e:
+            print(f"Error saat mengekstrak data dari {url}: {e}")
+
+        finally:
+            driver.quit()
+
+        new_links = get_putusan_mk_page(driver, start_url)
+        for link in new_links:
+            if link not in visited and link not in to_visit:
+                to_visit.append(link)
+
+    driver.quit()
+
+    return halaman_putusan_mk
+
+if __name__ == "__main__":
+
+    st.title("Tools AI Hukum")
+    kalimat_perkara = st.text_input("Masukkan perkara")
+    #kalimat_perkara = st.text_input("Masukkan perkara", key="kalimat_perkara")
+    # st.button("Cari Peraturan & Putusan", on_click=jalankan_scraping)
+
+    # 🔁 Proses pencarian data hanya dilakukan jika tombol ditekan ATAU data sudah ada di session_state
+    #if st.button("Cari Peraturan & Putusan"):
+    st.button("Cari Peraturan & Putusan")
+    st.session_state["kalimat_perkara"] = kalimat_perkara
+    peraturan, putusan_ma, putusan_mk = st.tabs(["Peraturan", "Putusan MA", "Putusan MK"])  
+    with peraturan:
+        if kalimat_perkara:
+            query_peraturan = kalimat_perkara.replace(" ", "+")
+            #peraturan_url = f"https://peraturan.bpk.go.id/Search?keywords={query_peraturan}&tentang=&nomor="
+            peraturan_url = f"https://peraturan.bpk.go.id/Search?keywords={query_peraturan}&tentang=&nomor=&jenis=7&jenis=39&jenis=8&jenis=214&jenis=9&jenis=10&jenis=11&jenis=12&jenis=13&jenis=15&jenis=16"
+            st.session_state["halaman_peraturan"] = scrape_peraturan_website(peraturan_url, max_pages=3)
+            halaman_peraturan = st.session_state.get("halaman_peraturan", {})               
+
+            if halaman_peraturan:
+                st.subheader("Data peraturan yang ditemukan:")
+                df_peraturan = pd.DataFrame([
+                    {
+                        "Tingkat": tingkat,
+                        "Isi Tingkat": isi_tingkat,
+                        "Tentang": tentang,
+                        "Status": status,
+                        "Isi Status": isi_status,
+                        "PDF": pdf
+                    } 
+                    for tentang, (tingkat, isi_tingkat, status, isi_status, pdf) in halaman_peraturan.items()
+                ])
+
+                mapping = {
+                    r"Undang-undang Dasar": "UUD 1945",
+                    r"Ketetapan MPR": "TAP MPR",
+                    r"Undang-undang": "UU",
+                    r"Peraturan Pemerintah Pengganti Undang-Undang": "Perpu",
+                    r"Peraturan Pemerintah": "PP",
+                    r"Peraturan Presiden": "Perpres",
+                    r"Keputusan Presiden": "Keppres",
+                    r"Instruksi Presiden": "Inpres",
+                    r"Peraturan Kementerian": "PERMEN",
+                    r"Peraturan Menteri": "Permen",
+                    r"Keputusan Menteri": "Kepmen",
+                    r"Peraturan Daerah": "Perda",
+                    r"Peraturan Gubernur": "Pergub"
+                }
+
+                def cari_tingkat(kalimat):
+                    return next((singkat for panjang, singkat in mapping.items() if panjang in kalimat), kalimat)
+
+                df_peraturan["Tingkat"] = df_peraturan["Tingkat"].apply(cari_tingkat)
+                semua_kategori = list(mapping.values()) + list(df_peraturan.loc[~df_peraturan["Tingkat"].isin(mapping.values()), "Tingkat"].unique())
+                df_peraturan["Tingkat"] = pd.Categorical(df_peraturan["Tingkat"], categories=semua_kategori, ordered=True)
+                df_peraturan = df_peraturan.sort_values("Tingkat")  # Urutkan berdasarkan kategori custom
+        
+                # # 🔹 Toggle (Semua default `False`)
+                toggle_filter = st.toggle("Aktifkan Filter?", value=False)
+
+                if toggle_filter:
+                    tingkat_filter = st.multiselect("Filter Jenis Peraturan:", options=semua_kategori, default=df_peraturan["Tingkat"].unique())
+                else:
+                    tingkat_filter = df_peraturan["Tingkat"].unique()
+
+                # # 🔹 **Filter Data**
+                filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
+
+                # 🔹 **CSS untuk Scrollable Table**
+                st.markdown(
+                    """
+                    <style>
+                        .scroll-container {
+                            max-height: 300px;
+                            overflow-y: auto;
+                            border: 1px solid #ddd;
+                            padding-right: 10px;
+                        }
+                        .header {
+                            font-weight: bold;
+                            background-color: #f0f0f0;
+                            padding: 8px 0;
+                            border-bottom: 2px solid #ccc;
+                        }
+                    </style>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Download sebagai JSON
+                json_data = filtered_df_peraturan.to_json(orient="records", force_ascii=False)
+                st.download_button(
+                    label="Download sebagai JSON",
+                    data=json_data,
+                    file_name='data_peraturan_bpk.json',
+                    mime='application/json',
+                )
+
+                # 🔸 **Header Kolom**
+                col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
+                with col1:
+                    st.subheader('Tingkat')
+                with col2:
+                    st.subheader('Tentang')
+                with col3:
+                    st.subheader('Status')
+                with col4:
+                    st.subheader('Dokumen')
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                for i in range(len(filtered_df_peraturan)):
+                    col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
+                    
+                    with col1:
+                        with st.popover(str(filtered_df_peraturan.iloc[i]["Tingkat"])):
+                            st.write(filtered_df_peraturan.iloc[i]["Isi Tingkat"])
+                    with col2:
+                        st.write(filtered_df_peraturan.iloc[i]["Tentang"])
+                    with col3:
+                        statuses = filtered_df_peraturan.iloc[i]["Status"]
+                        isi_statuses = filtered_df_peraturan.iloc[i]["Isi Status"]
+
+                        if not isinstance(statuses, list):
+                            statuses = [statuses]
+                            isi_statuses = [isi_statuses]
+
+                        # Filter berdasarkan isi_status yang mengandung "Dicabut dengan" atau "Mencabut"
+                        filtered_statuses = []
+                        filtered_isi_statuses = []
+
+                        for status, isi in zip(statuses, isi_statuses):
+                            if "Dicabut dengan" in status or "Mencabut" in status:
+                                filtered_statuses.append(status)
+                                filtered_isi_statuses.append(isi)
+                        
+                        for status, isi in zip(filtered_statuses, filtered_isi_statuses):
+                            with st.popover(status):
+                                st.write(isi)
+                    with col4:
+                        pdf_url = filtered_df_peraturan.iloc[i]["PDF"]
+                        if pdf_url:
+                            st.markdown(
+                                f"""
+                                <a href="{pdf_url}" target="_blank">
+                                    <button style="background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;">
+                                        Download PDF
+                                    </button>
+                                </a>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            st.write("Tidak ada PDF")
+                            #st.write(filtered_df_peraturan.iloc[i]["PDF"])
+                    # 🔹 Tambahkan garis pembatas
+                    st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.write("Tidak ada data peraturan yang ditemukan.")
+                st.warning("Tidak ada hasil dari peraturan — mungkin koneksi lambat atau situs sedang error.")
+        
+    with putusan_ma:
+        if kalimat_perkara:
+            #query_putusan_ma = urlencode({"keyword": kalimat_perkara})
+            query_putusan_ma = kalimat_perkara.replace(" ", "+") 
+            putusan_ma_url = f"https://putusan3.mahkamahagung.go.id/search.html?q={query_putusan_ma}"
+            #putusan_ma_url = f"https://jdih.mahkamahagung.go.id/search-result?search={query_putusan_ma}&jenis_dokumen=&bentuk_peraturan=&year="
+            st.session_state["halaman_putusan_ma"] = scrape_putusan_ma_website(putusan_ma_url, max_pages=1)
+            halaman_putusan_ma = st.session_state.get("halaman_putusan_ma", {})
+                
+            if halaman_putusan_ma:
+                st.subheader("Data putusan MA yang ditemukan:")
+                df_putusan_ma = pd.DataFrame([
+                    {
+                        "Putusan MA": judul_putusan_ma,
+                        "Detail": detail_putusan_ma,
+                        "Dokumen": pdf_putusan_ma
+                    } 
+                    for judul_putusan_ma, (detail_putusan_ma, pdf_putusan_ma) in halaman_putusan_ma.items()
+                ])
+                #st.dataframe(df_putusan_ma)
+
+                st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
+                # 🔸 **Header Kolom**
+                col1, col2, col3 = st.columns([1, 1, 1])
+                with col1:
+                    st.subheader('Putusan MA')
+                with col2:
+                    st.subheader('Detail')
+                with col3:
+                    st.subheader('Dokumen')
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # 🔹 **Scrollable Table**
+                st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
+
+                # 🔸 **Isi Tabel**
+                # if toggle_sort or toggle_filter:
+                # for i in range(len(filtered_df_putusan_ma)):
+                #     col1, col2, col3 = st.columns([3, 2, 2])
+                    
+                #     with col1:
+                #         with st.popover(str(filtered_df_putusan_ma.iloc[i]["Tingkat"])):
+                #             st.write(filtered_df_putusan_ma.iloc[i]["Isi Tingkat"])
+                #     with col2:
+                #         st.write(filtered_df_putusan_ma.iloc[i]["Tentang"])
+                #     with col3:
+                #         st.write(filtered_df_putusan_ma.iloc[i]["Isi Status"])
+                    
+                # else:
+                for i in range(len(df_putusan_ma)):
+                    col1, col2, col3 = st.columns([1, 1, 1])
+                    with col1:
+                        st.write(df_putusan_ma.iloc[i]["Putusan MA"])
+                    with col2:
+                        st.write(df_putusan_ma.iloc[i]["Detail"])
+                    with col3:
+                        pdf_url = df_putusan_ma.iloc[i]["Dokumen"]
+                        if pdf_url:
+                            st.markdown(
+                                f"""
+                                <a href="{pdf_url}" target="_blank">
+                                    <button style="background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;">
+                                        Download PDF
+                                    </button>
+                                </a>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            st.write("Tidak ada PDF")
+                    st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                #st.dataframe(df_peraturan, column_config={"PDF": st.column_config.LinkColumn("PDF Link")})
+                #create_clickable_df(df_peraturan)
+            else:
+                st.write("Tidak ada data putusan MA yang ditemukan.")
+                st.warning("Tidak ada hasil dari putusan MA — mungkin koneksi lambat atau situs sedang error.")
+
+    with putusan_mk:
+        if kalimat_perkara:
+            #query_putusan_mk = urlencode({"keyword": kalimat_perkara})
+            query_putusan_mk = kalimat_perkara.replace(" ", "+")
+
+            putusan_mk_url = f"https://www.mkri.id/index.php?page=web.Putusan&id=1&kat=5&cari={query_putusan_mk}"
+            #putusan_mk_url = f"https://jdih.mkri.id/dokumen/index?DokumenSearch%5Bjudul%5D={query_putusan_mk}"
+            st.session_state["halaman_putusan_mk"] = scrape_putusan_mk_website(putusan_mk_url, max_pages=1)
+            halaman_putusan_mk = st.session_state.get("halaman_putusan_mk", {})
+
+            if halaman_putusan_mk:
+                st.subheader("Data putusan MK yang ditemukan:")
+                df_putusan_mk = pd.DataFrame([
+                    {
+                        "Nomor": nomor_putusan_mk,
+                        "Pokok Perkara": pokok_perkara_mk,
+                        "Amar": amar_putusan_mk,
+                        "Status": status_putusan_mk,
+                        "Dokumen": pdf_putusan_mk
+                    } 
+                    for pokok_perkara_mk, (nomor_putusan_mk, amar_putusan_mk, status_putusan_mk, pdf_putusan_mk) in halaman_putusan_mk.items()
+                ])
+                #st.dataframe(df_putusan_mk)
+                st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
+                # 🔸 **Header Kolom**
+                col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+                with col1:
+                    st.subheader('Nomor')
+                with col2:
+                    st.subheader('Pokok Perkara')
+                with col3:
+                    st.subheader('Amar')
+                with col4:
+                    st.subheader('Status')
+                with col5:
+                    st.subheader('Dokumen')
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # 🔹 **Scrollable Table**
+                st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
+
+                # 🔸 **Isi Tabel**
+                # if toggle_sort or toggle_filter:
+                # for i in range(len(filtered_df_putusan_mk)):
+                #     col1, col2, col3 = st.columns([3, 2, 2])
+                    
+                #     with col1:
+                #         with st.popover(str(filtered_df_putusan_mk.iloc[i]["Tingkat"])):
+                #             st.write(filtered_df_putusan_mk.iloc[i]["Isi Tingkat"])
+                #     with col2:
+                #         st.write(filtered_df_putusan_mk.iloc[i]["Tentang"])
+                #     with col3:
+                #         st.write(filtered_df_putusan_mk.iloc[i]["Isi Status"])
+                    
+                # else:
+                for i in range(len(df_putusan_mk)):
+                    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+                    with col1:
+                        st.write(df_putusan_mk.iloc[i]["Nomor"])
+                    with col2:
+                        st.write(df_putusan_mk.iloc[i]["Pokok Perkara"])
+                    with col3:
+                        st.write(df_putusan_mk.iloc[i]["Amar"])
+                    with col4:
+                        st.write(df_putusan_mk.iloc[i]["Status"])
+                    with col5:
+                        pdf_url = df_putusan_mk.iloc[i]["Dokumen"]
+                        if pdf_url:
+                            st.markdown(
+                                f"""
+                                <a href="{pdf_url}" target="_blank">
+                                    <button style="background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;">
+                                        Download PDF
+                                    </button>
+                                </a>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            st.write("Tidak ada PDF")
+                    st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                #st.dataframe(df_peraturan, column_config={"PDF": st.column_config.LinkColumn("PDF Link")})
+                #create_clickable_df(df_peraturan)
+            else:
+                st.write("Tidak ada data putusan MK yang ditemukan.")
+                st.warning("Tidak ada hasil dari MK — mungkin koneksi lambat atau situs sedang error.")
