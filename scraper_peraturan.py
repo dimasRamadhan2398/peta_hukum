@@ -56,41 +56,41 @@ def tampilkan_peraturan(df_peraturan):
                 }
                 </style>
             """, unsafe_allow_html=True)
-        st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
-        st.markdown(f"**Tingkat** : {row['Tingkat']}")
-        st.markdown(f"{(row["Isi Tingkat"])}")
-
-        with st.expander("Detail Status"):
-            for status_item in row["Detail Status"]:
-                st.markdown(f"**{status_item['status']}**")
-                for isi in status_item["items"]:
-                    st.markdown(f"- {isi['Deskripsi Isi Status']}")
-                    if isi["PDF Isi Status"]:
-                        st.markdown(
-                                f"""
-                                <a href="{isi["PDF Isi Status"]}" target="_blank" download>
-                                    <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
-                                        Download PDF
-                                    </button>
-                                </a>
-                                """,
-                                unsafe_allow_html=True
-                            )
-        if row["PDF"]:
-            st.markdown(
-                f"""
-                <a href="{row["PDF"]}" target="_blank" download>
-                    <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
-                        Download PDF
-                    </button>
-                </a>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.write("❌ Tidak ada PDF")
-            
-        st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
+            st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
+            st.markdown(f"**Tingkat** : {row['Tingkat']}")
+            st.markdown(f"{(row["Isi Tingkat"])}")
+    
+            with st.expander("Detail Status"):
+                for status_item in row["Detail Status"]:
+                    st.markdown(f"**{status_item['status']}**")
+                    for isi in status_item["items"]:
+                        st.markdown(f"- {isi['Deskripsi Isi Status']}")
+                        if isi["PDF Isi Status"]:
+                            st.markdown(
+                                    f"""
+                                    <a href="{isi["PDF Isi Status"]}" target="_blank" download>
+                                        <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
+                                            Download PDF
+                                        </button>
+                                    </a>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
+            if row["PDF"]:
+                st.markdown(
+                    f"""
+                    <a href="{row["PDF"]}" target="_blank" download>
+                        <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
+                            Download PDF
+                        </button>
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:
+                st.write("❌ Tidak ada PDF")
+                
+            st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
     
 def hasil_peraturan(kalimat_peraturan):
     if kalimat_peraturan:
