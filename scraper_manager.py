@@ -1,24 +1,9 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
 from urllib.parse import urlparse, urljoin
 import pandas as pd
+import textwrap
 import os
 import json
-
-def init_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Mode headless
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument('--no-proxy-server')
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-    service = Service("https://github.com/dimasRamadhan2398/peta_hukum/blob/779c648811ce2e69c776e32b2847eea87847f7f9/chromedriver.exe")
-    #service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    return driver
+import re
 
 def get_page_links(driver, base_url, links):
     page_links = set()
@@ -41,30 +26,33 @@ def get_page_links(driver, base_url, links):
                 page_links.add(full_url)
     return page_links
 
-def cari_di_file_json(kalimat_peraturan, path_json, drop_subset, column):
-    if not os.path.exists(path_json):
+def cari_di_file_json(kalimat_perkara, path_json, column):
+    try:
+        with open(path_json, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        df = pd.DataFrame(data)
+    except:
         return pd.DataFrame()
 
-    with open(path_json, encoding="utf-8") as f:
-        data = json.load(f)
-    #list_data = list(data.values())
-    df_json = pd.DataFrame(data)
-    df_json = df_json.drop_duplicates(subset=[drop_subset])
-    df_json = df_json[df_json[column].str.contains(kalimat_peraturan, case=False, na=False)]
-    return df_json
+    query_words = kalimat_perkara.lower().split()
+    pattern = r"(?i)" + r"|".join(re.escape(word) for word in query_words)  # regex OR
 
-def simpan_ke_json(df_new, path, drop_subset):
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            existing = json.load(f)
-            if isinstance(existing, dict):
-                existing = list(existing.values())
-    else:
-        existing = []
+    return df[df[column].str.lower().str.contains(pattern, na=False)]
 
-    df_existing = pd.DataFrame(existing)
-    combined = pd.concat([df_existing, df_new], ignore_index=True)
-    combined = combined.drop_duplicates(drop_subset)  # Hindari duplikat
+def rapihkan_text(isi: str, max_line_width=100):
+    # Hapus karakter newline berturut-turut, spasi ekstra, dll.
+    isi_bersih = re.sub(r"\s*\n\s*", " ", isi).strip()
 
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(combined.to_dict(orient="records"), f, ensure_ascii=False, indent=2)
+    # Pisah berdasarkan titik sebagai akhir kalimat (kecuali untuk singkatan seperti No. atau Tn.)
+    kalimat_list = re.split(r'(?<=[a-z0-9])\.(\s+)', isi_bersih)
+
+    # Gabungkan kembali kalimat dan spasi setelah titik
+    kalimat_list = ["".join(kalimat_list[i:i+2]) for i in range(0, len(kalimat_list), 2)]
+
+    # Bersihkan spasi dan baris kosong
+    kalimat_list = [k.strip() for k in kalimat_list if k.strip()]
+
+    # Format sebagai bullet point (dengan wrap agar tidak panjang horizontalnya)
+    hasil = "\n\n".join([f"• {textwrap.fill(kalimat, width=max_line_width)}" for kalimat in kalimat_list])
+
+    return hasil
