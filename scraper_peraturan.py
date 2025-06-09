@@ -105,7 +105,7 @@ def tampilkan_peraturan(df_peraturan):
 def hasil_peraturan(kalimat_peraturan):
     if kalimat_peraturan:
         
-        peraturan_json = "C:/Users/Dimas/Downloads/ai_hukum/data_peraturan_gabungan_baru.json"
+        peraturan_json = "data_peraturan_gabungan_baru.json"
         df_peraturan_lokal = cari_di_file_json(kalimat_peraturan, peraturan_json, "Tentang")
         if not df_peraturan_lokal.empty:
             tampilkan_peraturan(df_peraturan_lokal)
