@@ -1,5 +1,6 @@
 streamlit
 pandas
-selenium
-webdriver-manager
-chromedriver-autoinstaller
+textwrap
+os
+json
+re
