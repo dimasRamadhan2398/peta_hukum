@@ -1,4 +1,4 @@
-from scraper_manager import cari_di_file_json
+from scraper_manager import cari_di_file_json, rapihkan_text
 from urllib.parse import urlparse, urljoin
 import streamlit as st
 import pandas as pd
@@ -39,7 +39,7 @@ def tampilkan_peraturan(df_peraturan):
         </script>
     """, unsafe_allow_html=True)
     
-    device = st.experimental_get_query_params().get("device", ["desktop"])[0]
+    device = st.query_params().get("device", ["desktop"])[0]
     is_mobile = device == "mobile"
 
     # # 🔹 Toggle (Semua default `False`)
