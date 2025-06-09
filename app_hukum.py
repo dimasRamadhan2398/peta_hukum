@@ -3,7 +3,7 @@ from scraper_peraturan import hasil_peraturan
 from scraper_putusan_ma import hasil_putusan_ma
 from scraper_putusan_mk import hasil_putusan_mk
 
-st.title("Tools AI Hukum")
+st.title("Peta Hukum")
 kalimat_perkara = st.text_input("Masukkan perkara")
 # Inisialisasi session_state jika belum ada
 cari = st.button("Cari Peraturan & Putusan")
