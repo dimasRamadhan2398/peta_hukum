@@ -6,6 +6,9 @@ import time
 import re
 
 def tampilkan_peraturan(df_peraturan):
+    st.markdown("""
+        <div style="overflow-x: auto; white-space: nowrap;">
+    """, unsafe_allow_html=True)
     mapping = {
         r"Undang-undang Dasar": "UUD 1945",
         r"Ketetapan MPR": "TAP MPR",
@@ -98,17 +101,14 @@ def tampilkan_peraturan(df_peraturan):
                 
         # 🔹 Tambahkan garis pembatas
         st.markdown("<hr>", unsafe_allow_html=True)
-
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 def hasil_peraturan(kalimat_peraturan):
     if kalimat_peraturan:
         
         peraturan_json = "data_peraturan_gabungan_baru.json"
         df_peraturan_lokal = cari_di_file_json(kalimat_peraturan, peraturan_json, "Tentang")
         if not df_peraturan_lokal.empty:
-            st.markdown("""
-                <div style="overflow-x: auto; white-space: nowrap;">
-            """, unsafe_allow_html=True)
             tampilkan_peraturan(df_peraturan_lokal)
-            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("🔍 Data tidak ditemukan.")
