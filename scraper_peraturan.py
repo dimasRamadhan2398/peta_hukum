@@ -5,6 +5,19 @@ import pandas as pd
 import time
 import re
 
+# Deteksi ukuran layar dan simpan ke session_state
+st.markdown("""
+    <script>
+    const isMobile = window.innerWidth < 768;
+    const queryParams = new URLSearchParams(window.location.search);
+    queryParams.set("device", isMobile ? "mobile" : "desktop");
+    window.history.replaceState(null, null, "?" + queryParams.toString());
+    </script>
+""", unsafe_allow_html=True)
+
+device = st.experimental_get_query_params().get("device", ["desktop"])[0]
+is_mobile = device == "mobile"
+
 def tampilkan_peraturan(df_peraturan):
     mapping = {
         r"Undang-undang Dasar": "UUD 1945",
@@ -55,6 +68,31 @@ def tampilkan_peraturan(df_peraturan):
     st.markdown('</div>', unsafe_allow_html=True)
 
     for i in range(len(filtered_df_peraturan)):
+        row = filtered_df_peraturan.iloc[i]
+
+    if is_mobile:
+        st.markdown("### 🔹 Peraturan")
+        st.markdown(f"**Tingkat:** {row['Tingkat']}")
+        st.markdown(f"**Tentang:** {row['Tentang']}")
+
+        with st.expander("📋 Isi Tingkat"):
+            st.markdown(rapihkan_text(row["Isi Tingkat"]))
+
+        with st.expander("📎 Detail Status"):
+            for status_item in row["Detail Status"]:
+                st.markdown(f"**{status_item['status']}**")
+                for isi in status_item["items"]:
+                    st.markdown(f"- {isi['Deskripsi Isi Status']}")
+                    if isi["PDF Isi Status"]:
+                        st.markdown(f"[📄 Unduh PDF]({isi['PDF Isi Status']})")
+
+        if row["PDF"]:
+            st.markdown(f"[📥 Unduh Dokumen PDF]({row['PDF']})")
+        else:
+            st.write("❌ Tidak ada PDF.")
+
+        st.markdown("---")
+    else:
         col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
         
         with col1:
