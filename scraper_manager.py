@@ -5,27 +5,6 @@ import os
 import json
 import re
 
-def get_page_links(driver, base_url, links):
-    page_links = set()
-    try:
-        elements =  driver.find_elements(By.CSS_SELECTOR, links)
-    except Exception as e:
-        print(f"Error saat mengambil elemen: {e}")
-        return set()
-    base_domain = urlparse(base_url).netloc
-    for element in elements:
-        href = element.get_attribute("href")
-        text = element.text.strip()
-        if not text.isdigit():
-            continue
-        if href:
-            parsed_href = urlparse(href)
-            # Jika href kosong atau masih di domain yang sama, tambahkan link tersebut
-            if parsed_href.netloc == "" or parsed_href.netloc == base_domain:
-                full_url = urljoin(base_url, href)
-                page_links.add(full_url)
-    return page_links
-
 def cari_di_file_json(kalimat_perkara, path_json, column):
     try:
         with open(path_json, "r", encoding="utf-8") as f:
