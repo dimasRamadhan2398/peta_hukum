@@ -5,19 +5,6 @@ import pandas as pd
 import time
 import re
 
-# Deteksi via query param dari JS
-st.markdown("""
-    <script>
-    const isMobile = window.innerWidth < 768;
-    const queryParams = new URLSearchParams(window.location.search);
-    queryParams.set("device", isMobile ? "mobile" : "desktop");
-    window.history.replaceState(null, null, "?" + queryParams.toString());
-    </script>
-""", unsafe_allow_html=True)
-
-# Baca nilai "device" dari query param
-device = st.query_params.get("device", ["desktop"])[0]
-
 def tampilkan_peraturan(df_peraturan):
     mapping = {
         r"Undang-undang Dasar": "UUD 1945",
@@ -53,19 +40,23 @@ def tampilkan_peraturan(df_peraturan):
     # # 🔹 **Filter Data**
     filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
 
+    
+    # Deteksi via query param dari JS
+    st.markdown("""
+        <script>
+        const isMobile = window.innerWidth < 768;
+        const queryParams = new URLSearchParams(window.location.search);
+        queryParams.set("device", isMobile ? "mobile" : "desktop");
+        window.history.replaceState(null, null, "?" + queryParams.toString());
+        </script>
+    """, unsafe_allow_html=True)
+
     device = st.query_params.get("device", ["desktop"])[0]
     is_mobile = device == "mobile"
     
     if is_mobile:
         st.markdown("""
         <style>
-        .horizontal-scroll-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 1rem;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
         .peraturan-card {
             flex: 0 0 auto;
             min-width: 300px;
@@ -85,9 +76,6 @@ def tampilkan_peraturan(df_peraturan):
         if df_peraturan.empty:
             st.warning("📭 Data tidak ditemukan.")
             return
-    
-        # Buat kontainer scroll horizontal
-        st.markdown('<div class="horizontal-scroll-container">', unsafe_allow_html=True)
     
         for _, row in filtered_df_peraturan.iterrows():
             st.markdown('<div class="peraturan-card">', unsafe_allow_html=True)
@@ -126,8 +114,7 @@ def tampilkan_peraturan(df_peraturan):
                 st.write("❌ Tidak ada PDF")
     
             st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
-    
-        st.markdown('</div>', unsafe_allow_html=True)
+            
     else:
         st.subheader("Data peraturan yang ditemukan:")
         # 🔸 **Header Kolom**
