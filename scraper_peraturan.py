@@ -40,26 +40,9 @@ def tampilkan_peraturan(df_peraturan):
     # # 🔹 **Filter Data**
     filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
 
-    st.markdown("""
-        <style>
-        .peraturan-card {
-            flex: 0 0 auto;
-            min-width: 300px;
-            background-color: #f9f9f9;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            padding: 1rem;
-        }
-        .peraturan-card h4 {
-            margin-top: 0;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
     st.subheader("Data Peraturan")
 
     for _, row in filtered_df_peraturan.iterrows():
-        st.markdown('<div class="peraturan-card">', unsafe_allow_html=True)
         st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
         st.markdown(f"**Tingkat** : {row['Tingkat']}")
         st.markdown(f"{(row["Isi Tingkat"])}")
@@ -94,7 +77,7 @@ def tampilkan_peraturan(df_peraturan):
         else:
             st.write("❌ Tidak ada PDF")
             
-        st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
+        st.markdown('<hr>', unsafe_allow_html=True)  # Tutup card
     
 def hasil_peraturan(kalimat_peraturan):
     if kalimat_peraturan:
