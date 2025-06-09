@@ -39,7 +39,10 @@ def tampilkan_peraturan(df_peraturan):
         </script>
     """, unsafe_allow_html=True)
     
-    device = st.query_params().get("device", ["desktop"])[0]
+    try:
+        device = st.query_params.get("device", ["desktop"])[0]
+    except:
+        device = "desktop"
     is_mobile = device == "mobile"
 
     # # 🔹 Toggle (Semua default `False`)
