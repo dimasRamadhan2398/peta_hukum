@@ -6,9 +6,6 @@ import time
 import re
 
 def tampilkan_peraturan(df_peraturan):
-    st.markdown("""
-        <div style="overflow-x: auto; white-space: nowrap;">
-    """, unsafe_allow_html=True)
     mapping = {
         r"Undang-undang Dasar": "UUD 1945",
         r"Ketetapan MPR": "TAP MPR",
@@ -43,64 +40,61 @@ def tampilkan_peraturan(df_peraturan):
     # # 🔹 **Filter Data**
     filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
 
-    st.subheader("Data peraturan yang ditemukan:")
-    # 🔸 **Header Kolom**
-    col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
-    with col1:
-        st.subheader('Tingkat')
-    with col2:
-        st.subheader('Tentang')
-    with col3:
-        st.subheader('Status')
-    with col4:
-        st.subheader('Dokumen')
-    
-    for i in range(len(filtered_df_peraturan)):
-        col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
-        
-        with col1:
-            with st.popover(str(filtered_df_peraturan.iloc[i]["Tingkat"])):
-                st.write(filtered_df_peraturan.iloc[i]["Isi Tingkat"])
-        with col2:
-            st.write(filtered_df_peraturan.iloc[i]["Tentang"])
-        with col3:
-            for status_item in filtered_df_peraturan.iloc[i]["Detail Status"]:
-                status_label = status_item["status"]
-                with st.popover(status_label):
-                    for isi in status_item["items"]:
-                        st.markdown(f"**{isi['Deskripsi Isi Status']}**", unsafe_allow_html=True)
-                        if isi["PDF Isi Status"]:
-                            st.markdown(
-                                f"""
-                                <a href="{isi["PDF Isi Status"]}" target="_blank" download>
-                                    <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
-                                        Download PDF
-                                    </button>
-                                </a>
-                                """,
-                                unsafe_allow_html=True
-                            )
-                        else:
-                            st.write("🔍 PDF tidak ditemukan.")
+    st.markdown("""
+    <style>
+    .horizontal-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .peraturan-card {
+        flex: 0 0 auto;
+        min-width: 300px;
+        background-color: #f9f9f9;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        padding: 1rem;
+    }
+    .peraturan-card h4 {
+        margin-top: 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-        with col4:
-            pdf_url = filtered_df_peraturan.iloc[i]["PDF"]
-            if pdf_url:
-                st.markdown(
-                    f"""
-                    <a href="{pdf_url}" target="_blank">
-                        <button style="background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;">
-                            Download PDF
-                        </button>
-                    </a>
-                    """,
-                    unsafe_allow_html=True
-                )
-            else:
-                st.write("Tidak ada PDF")
-                
-        # 🔹 Tambahkan garis pembatas
-        st.markdown("<hr>", unsafe_allow_html=True)
+    st.subheader("📋 Data Peraturan (Geser ke samping 👉 jika di mobile)")
+
+    if df_peraturan.empty:
+        st.warning("📭 Data tidak ditemukan.")
+        return
+
+    # Buat kontainer scroll horizontal
+    st.markdown('<div class="horizontal-scroll-container">', unsafe_allow_html=True)
+
+    for _, row in filtered_df_peraturan.iterrows():
+        st.markdown('<div class="peraturan-card">', unsafe_allow_html=True)
+        st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
+        st.markdown(f"**Tingkat**: {row['Tingkat']}")
+
+        with st.expander("📘 Isi Tingkat"):
+            st.markdown(rapihkan_text(row["Isi Tingkat"]))
+
+        with st.expander("Detail Status"):
+            for status_item in row["Detail Status"]:
+                st.markdown(f"**{status_item['status']}**")
+                for isi in status_item["items"]:
+                    st.markdown(f"- {isi['Deskripsi Isi Status']}")
+                    if isi["PDF Isi Status"]:
+                        st.markdown(f"[📄 Unduh PDF]({isi['PDF Isi Status']})")
+
+        if row["PDF"]:
+            st.markdown(f"[📥 Unduh Dokumen PDF]({row['PDF']})", unsafe_allow_html=True)
+        else:
+            st.write("❌ Tidak ada PDF")
+
+        st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
+
     st.markdown('</div>', unsafe_allow_html=True)
     
 def hasil_peraturan(kalimat_peraturan):
