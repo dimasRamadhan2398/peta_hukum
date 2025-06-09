@@ -40,59 +40,55 @@ def tampilkan_peraturan(df_peraturan):
     # # 🔹 **Filter Data**
     filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
 
-    st.markdown("""
-    <style>
-    .peraturan-card {
-        flex: 0 0 auto;
-        min-width: 300px;
-        background-color: #f9f9f9;
-        border-radius: 12px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        padding: 1rem;
-    }
-    .peraturan-card h4 {
-        margin-top: 0;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.subheader("📋 Data Peraturan (Geser ke samping 👉 jika di mobile)")
+    st.subheader("Data Peraturan")
 
     for _, row in filtered_df_peraturan.iterrows():
-        st.markdown('<div class="peraturan-card">', unsafe_allow_html=True)
-            st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
-            st.markdown(f"**Tingkat** : {row['Tingkat']}")
-            st.markdown(f"{(row["Isi Tingkat"])}")
-    
-            with st.expander("Detail Status"):
-                for status_item in row["Detail Status"]:
-                    st.markdown(f"**{status_item['status']}**")
-                    for isi in status_item["items"]:
-                        st.markdown(f"- {isi['Deskripsi Isi Status']}")
-                        if isi["PDF Isi Status"]:
-                            st.markdown(
-                                    f"""
-                                    <a href="{isi["PDF Isi Status"]}" target="_blank" download>
-                                        <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
-                                            Download PDF
-                                        </button>
-                                    </a>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
-            if row["PDF"]:
-                st.markdown(
-                    f"""
-                    <a href="{row["PDF"]}" target="_blank" download>
-                        <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
-                            Download PDF
-                        </button>
-                    </a>
-                    """,
-                    unsafe_allow_html=True
-                )
-            else:
-                st.write("❌ Tidak ada PDF")
+        with st.container():
+            st.markdown("""
+                <style>
+                .stContainer > div {
+                    background-color: #f9f9f9;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                    padding: 1rem;
+                    margin-right: 1rem;
+                    min-width: 300px;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+        st.markdown(f"<h4>{row['Tentang']}</h4>", unsafe_allow_html=True)
+        st.markdown(f"**Tingkat** : {row['Tingkat']}")
+        st.markdown(f"{(row["Isi Tingkat"])}")
+
+        with st.expander("Detail Status"):
+            for status_item in row["Detail Status"]:
+                st.markdown(f"**{status_item['status']}**")
+                for isi in status_item["items"]:
+                    st.markdown(f"- {isi['Deskripsi Isi Status']}")
+                    if isi["PDF Isi Status"]:
+                        st.markdown(
+                                f"""
+                                <a href="{isi["PDF Isi Status"]}" target="_blank" download>
+                                    <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
+                                        Download PDF
+                                    </button>
+                                </a>
+                                """,
+                                unsafe_allow_html=True
+                            )
+        if row["PDF"]:
+            st.markdown(
+                f"""
+                <a href="{row["PDF"]}" target="_blank" download>
+                    <button style="margin-top:5px;margin-bottom:10px;background-color:#4CAF50;color:white;padding:5px 10px;border:none;border-radius:5px;">
+                        Download PDF
+                    </button>
+                </a>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.write("❌ Tidak ada PDF")
             
         st.markdown('</div>', unsafe_allow_html=True)  # Tutup card
     
