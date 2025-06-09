@@ -40,10 +40,6 @@ def tampilkan_peraturan(df_peraturan):
     # # 🔹 **Filter Data**
     filtered_df_peraturan = df_peraturan[df_peraturan["Tingkat"].isin(tingkat_filter)] if toggle_filter else df_peraturan.copy()
 
-    st.markdown("""
-        <div style="overflow-x: auto; white-space: nowrap;">
-    """, unsafe_allow_html=True)
-
     st.subheader("Data peraturan yang ditemukan:")
     # 🔸 **Header Kolom**
     col1, col2, col3, col4 = st.columns([2, 3, 2, 2])
@@ -102,7 +98,6 @@ def tampilkan_peraturan(df_peraturan):
                 
         # 🔹 Tambahkan garis pembatas
         st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 def hasil_peraturan(kalimat_peraturan):
     if kalimat_peraturan:
@@ -110,6 +105,10 @@ def hasil_peraturan(kalimat_peraturan):
         peraturan_json = "data_peraturan_gabungan_baru.json"
         df_peraturan_lokal = cari_di_file_json(kalimat_peraturan, peraturan_json, "Tentang")
         if not df_peraturan_lokal.empty:
+            st.markdown("""
+                <div style="overflow-x: auto; white-space: nowrap;">
+            """, unsafe_allow_html=True)
             tampilkan_peraturan(df_peraturan_lokal)
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("🔍 Data tidak ditemukan.")
