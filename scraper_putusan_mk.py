@@ -81,6 +81,6 @@ def hasil_putusan_mk(kalimat_putusan_mk):
         putusan_mk_json = "data_putusan_mk_gabungan_baru.json"
         df_putusan_mk_lokal = cari_di_file_json(kalimat_putusan_mk, putusan_mk_json, "Kata Kunci")
         if not df_putusan_mk_lokal.empty:
-            tampilkan_putusan_mk(df_putusan_mk_lengkap)             
+            tampilkan_putusan_mk(df_putusan_mk_lokal)             
         else:
             st.warning("🔍 Data tidak ditemukan.")
