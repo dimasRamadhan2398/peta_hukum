@@ -32,7 +32,10 @@ def tampilkan_putusan_ma(df_putusan_ma):
         st.markdown(f"**Tentang** : {row['Kata Kunci']}")
 
         with st.expander("Detail Putusan"):
-            st.markdown(rapihkan_text(row['Detail']))
+            hasil = rapihkan_text(row['Detail'])
+
+            for i, kalimat in enumerate(hasil, 1):
+                st.markdown(f"{i}. {kalimat}")
                             
         if row["Dokumen"]:
             st.markdown(
