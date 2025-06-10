@@ -30,7 +30,7 @@ def tampilkan_peraturan(df_peraturan):
     df_peraturan = df_peraturan.sort_values("Tingkat")  # Urutkan berdasarkan kategori custom
 
     # # 🔹 Toggle (Semua default `False`)
-    toggle_filter = st.toggle("Aktifkan Filter?", value=False, key="filter_peraturan")
+    toggle_filter = st.toggle("Aktifkan Filter Tingkat", value=False, key="filter_peraturan")
 
     if toggle_filter:
         tingkat_filter = st.multiselect("Filter Jenis Peraturan:", options=df_peraturan["Tingkat"].unique(), default=df_peraturan["Tingkat"].unique())
