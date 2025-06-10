@@ -33,7 +33,7 @@ def tampilkan_putusan_ma(df_putusan_ma):
 
         with st.expander("Detail Putusan"):
             st.markdown(f"**{row['Detail']}**")
-                            )
+                            
         if row["Dokumen"]:
             st.markdown(
                 f"""
