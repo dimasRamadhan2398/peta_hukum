@@ -14,7 +14,7 @@ def tampilkan_putusan_ma(df_putusan_ma):
     df_putusan_ma = df_putusan_ma.sort_values("Tahun", ascending=False, na_position="last")
 
     # # 🔹 Toggle (Semua default `False`)
-    toggle_filter = st.toggle("Aktifkan Filter?", value=False, key="filter_putusan_ma")
+    toggle_filter = st.toggle("Aktifkan Filter Tahun", value=False, key="filter_putusan_ma")
 
     if toggle_filter:
         tahun_options = sorted(df_putusan_ma["Tahun"].dropna().unique(), reverse=True)
