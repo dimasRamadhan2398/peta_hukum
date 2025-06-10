@@ -18,20 +18,11 @@ def cari_di_file_json(kalimat_perkara, path_json, column):
 
     return df[df[column].str.lower().str.contains(pattern, na=False)]
 
-def rapihkan_text(isi: str, max_line_width=100):
-    # Hapus karakter newline berturut-turut, spasi ekstra, dll.
-    isi_bersih = re.sub(r"\s*\n\s*", " ", isi).strip()
+def rapihkan_text(teks):
+    # Pisahkan berdasarkan titik koma
+    potongan = re.split(r';\s*', teks)
 
-    # Pisah berdasarkan titik sebagai akhir kalimat (kecuali untuk singkatan seperti No. atau Tn.)
-    kalimat_list = re.split(r'(?<=[a-z0-9])\;(\s+)', isi_bersih)
+    # Bersihkan dan buang potongan kosong
+    potongan_bersih = [p.strip().replace('\n', ' ') for p in potongan if p.strip()]
 
-    # Gabungkan kembali kalimat dan spasi setelah titik
-    kalimat_list = ["".join(kalimat_list[i:i+2]) for i in range(0, len(kalimat_list), 2)]
-
-    # Bersihkan spasi dan baris kosong
-    kalimat_list = [k.strip() for k in kalimat_list if k.strip()]
-
-    # Format sebagai bullet point (dengan wrap agar tidak panjang horizontalnya)
-    hasil = "\n\n".join([f"• {textwrap.fill(kalimat, width=max_line_width)}" for kalimat in kalimat_list])
-
-    return hasil
+    return potongan_bersih
