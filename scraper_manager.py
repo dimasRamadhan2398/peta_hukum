@@ -23,7 +23,7 @@ def rapihkan_text(isi: str, max_line_width=100):
     isi_bersih = re.sub(r"\s*\n\s*", " ", isi).strip()
 
     # Pisah berdasarkan titik sebagai akhir kalimat (kecuali untuk singkatan seperti No. atau Tn.)
-    kalimat_list = re.split(r'(?<=[a-z0-9])\.(\s+)', isi_bersih)
+    kalimat_list = re.split(r'(?<=[a-z0-9])\.\;(\s+)', isi_bersih)
 
     # Gabungkan kembali kalimat dan spasi setelah titik
     kalimat_list = ["".join(kalimat_list[i:i+2]) for i in range(0, len(kalimat_list), 2)]
