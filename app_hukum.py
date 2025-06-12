@@ -4,7 +4,7 @@ from scraper_putusan_ma import hasil_putusan_ma
 from scraper_putusan_mk import hasil_putusan_mk
 
 st.title("Peta Hukum")
-kalimat_perkara = st.text_input("Masukkan perkara")
+kalimat_perkara = st.text_input(" ", placeholder="Masukkan perkara anda disini")
 # Inisialisasi session_state jika belum ada
 cari = st.button("Cari Peraturan & Putusan")
 peraturan, putusan_ma, putusan_mk = st.tabs(["Peraturan", "Putusan MA", "Putusan MK"])  
